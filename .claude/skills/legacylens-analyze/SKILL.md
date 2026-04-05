@@ -252,6 +252,16 @@ For each program in the call tree, read the source file and extract:
 - `SNDRCVF` -- display file I/O
 - `CRTDTAQ` / `SNDDTAQ` / `RCVDTAQ` -- data queue operations
 - `SNDMSG` / `SNDBRKMSG` -- message queue operations
+- **Library list changes** -- these alter the runtime search path for files and programs:
+  - `ADDLIBLE LIB(xxx)` -- adds a library to the job library list (position: *FIRST, *LAST, *BEFORE, *AFTER)
+  - `RMVLIBLE LIB(xxx)` -- removes a library from the job library list
+  - `CHGLIBL LIBL(lib1 lib2 ...)` -- replaces the entire user portion of the library list
+  - `CHGCURLIB CURLIB(xxx)` -- changes the current library (default for unqualified creates)
+  - `EDTLIBL` -- interactive library list editor (rare in production code)
+  - `RTVJOBA USRLIBL(&var)` / `RTVJOBA CURLIB(&var)` -- retrieves the current library list
+  Document which libraries are added/removed, the position, and whether the change is
+  restored later (RMVLIBLE after processing). This is critical for modernization because
+  library list order determines which version of a file or program is found at runtime.
 
 ### RPG/RPGLE:
 - **F-specs**: File declarations. Parse:
@@ -272,12 +282,28 @@ For each program in the call tree, read the source file and extract:
 - D-spec `msgfil` or `MSGFIL` field with `INZ('msgfname')` -- message file reference
 - I-spec literal initialization for MSGFIL (e.g., `I I 'HSMSGF' 1 10 MSGFIL`)
 - `CALLSUBR SUBR($name)` -- S/36 legacy subroutine patterns
+- **File overrides via QCMDEXC** -- RPG programs sometimes execute CL commands at
+  runtime by building a command string and calling QCMDEXC. Detect these patterns:
+  - A string field being built with `'OVRDBF'` or `'DLTOVR'` content, then passed
+    to `CALL 'QCMDEXC'` -- extract the override FILE and TOFILE values
+  - `'OPNQRYF'` command strings built and executed via QCMDEXC
+  - `'OVRPRTF'` for printer file overrides
+  - Any `'ADDLIBLE'`, `'RMVLIBLE'`, `'CHGLIBL'`, or `'CHGCURLIB'` command strings
+    executed via QCMDEXC -- these are library list changes from within RPG
+  Also check for the QCMD API pattern: `CALL 'QCMD'` with a command string parameter.
+- **Library list changes via QCMDEXC** -- when RPG programs need to modify the library
+  list, they build command strings like `'ADDLIBLE LIB(PRODLIB)'` and execute them via
+  QCMDEXC. Search for ADDLIBLE, RMVLIBLE, CHGLIBL, CHGCURLIB in string literals and
+  in fields/data structures that are passed to QCMDEXC.
 
 ### SQLRPG/SQLRPGLE (additionally):
 - `EXEC SQL` / `/EXEC SQL` -- embedded SQL statements
 - `DECLARE ... CURSOR` -- cursor declarations
 - `SELECT`, `INSERT`, `UPDATE`, `DELETE` -- SQL DML with table names
 - `FROM`, `JOIN` -- table references in queries
+- `SET PATH` / `SET SCHEMA` / `SET CURRENT SCHEMA` -- SQL-based library/schema changes
+  (equivalent to CHGLIBL/CHGCURLIB but through the SQL engine)
+- Library list changes via QCMDEXC -- same patterns as RPG/RPGLE above apply here too
 
 ### OCL/OCL36:
 - `// LOAD pgmname` -- program load (= CALL)
@@ -285,6 +311,8 @@ For each program in the call tree, read the source file and extract:
 - `// FILE NAME-filename,RECORDS-n,RETAIN-x,PACK-y` -- file declarations
 - `// PRINTER` / `// FORMS` -- print control
 - `$COPY`, `$LABEL`, `$MAINC` -- S/36 subroutine patterns
+- `// LIBRARY NAME-libname` -- library override (S/36 equivalent of ADDLIBLE)
+- `// SWITCH` -- job switch settings (S/36 equivalent of indicators)
 
 ### EBCDIC Detection:
 If a source file contains non-printable characters or cannot be read as text, note it
@@ -356,9 +384,20 @@ For each file referenced, determine if it is a Logical File (LF) or Physical Fil
 
 ### 4.3 Trace File Overrides
 
-In CLP programs, `OVRDBF FILE(X) TOFILE(Y)` means that when a downstream program
-opens file X, it actually reads from Y. Document these override chains to identify the
-actual physical file being accessed at runtime.
+File overrides redirect file access at runtime. Detect them in ALL program types:
+
+- **CLP/CLLE**: `OVRDBF FILE(X) TOFILE(Y)` / `OVRDBF FILE(X) TOFILE(LIB/Y)` --
+  direct override command. Also check `OVRPRTF` for printer file overrides and
+  `DLTOVR` for override cleanup.
+- **RPG/RPGLE**: OVRDBF executed via QCMDEXC -- look for command strings containing
+  `'OVRDBF'` built in fields/data structures and passed to `CALL 'QCMDEXC'`. Also
+  check for `'OVRPRTF'` and `'DLTOVR'` via QCMDEXC.
+- **OCL/OCL36**: `// FILE NAME-filename` with `PACK-S` or library qualifiers can
+  function as implicit overrides in S/36 compatibility mode.
+
+Document override chains to identify the actual physical file being accessed at
+runtime. An override in a CLP that calls an RPG program affects which file the RPG
+program opens -- trace these cross-program override scopes.
 
 ### 4.4 Produce File Tables
 
@@ -405,6 +444,11 @@ explanation in parentheses on first use. Examples:
 - "BEGSR/ENDSR (subroutine boundaries -- internal procedures within an RPG program)"
 - "Record format (a named set of fields within a file, like a row schema/struct)"
 - "S/36 OCL (System/36 Operation Control Language -- the oldest scripting layer, predating CLP)"
+- "Library List (the runtime search path for files, programs, and objects -- like PATH or classpath)"
+- "ADDLIBLE (adds a library to the job's search path at runtime)"
+- "RMVLIBLE (removes a library from the job's search path at runtime)"
+- "CHGLIBL (replaces the entire user library list -- resets the search path)"
+- "CHGCURLIB (changes the default library for new object creation)"
 
 Use this structure:
 
@@ -513,12 +557,36 @@ construct does and why it exists."}
 
 {Explain: "File Overrides (OVRDBF) redirect file access at runtime -- like dependency
 injection for database files. Dynamic Queries (OPNQRYF/OPNSQLF) build filtered views
-on the fly, similar to parameterized SQL queries."}
+on the fly, similar to parameterized SQL queries. Overrides can appear in CLP programs
+(direct OVRDBF command), in RPG programs (OVRDBF executed via QCMDEXC), or in OCL
+(// FILE declarations). An override set in a CLP affects all downstream programs it
+calls -- trace these cross-program scopes."}
 
-| Program | Command | Description | Target | Selection Criteria |
-|---------|---------|------------|--------|--------------------|
+| Program | Source Type | Command | Description | Override From | Override To | Selection Criteria |
+|---------|-----------|---------|------------|---------------|-------------|-------------------|
 
-### 6.2 Background Job Submissions (SBMJOB)
+### 6.2 Library List Changes
+
+{Explain: "The Library List is the AS400 runtime search path -- it determines which
+version of a file, program, or object is found when referenced by unqualified name.
+Analogous to PATH on Unix or classpath in Java. Programs that modify the library list
+at runtime (ADDLIBLE, RMVLIBLE, CHGLIBL, CHGCURLIB) are changing the execution context
+for themselves and all downstream calls. This is critical for modernization because it
+means the same program can operate on different databases depending on which libraries
+are in the list. In RPG programs, these commands are executed via QCMDEXC."}
+
+| Program | Source Type | Command | Library | Position/Details | Restored? |
+|---------|-----------|---------|---------|-----------------|-----------|
+
+{For each library list change, document:
+- Which program makes the change and its source type (CLP/RPG/OCL)
+- The command used (ADDLIBLE, RMVLIBLE, CHGLIBL, CHGCURLIB, or QCMDEXC wrapper)
+- The library name (literal or variable -- if variable, trace to its source)
+- Position (*FIRST, *LAST, *BEFORE, *AFTER) for ADDLIBLE
+- Whether the change is restored after processing (RMVLIBLE after ADDLIBLE)
+- For CHGLIBL, the complete library list if available}
+
+### 6.3 Background Job Submissions (SBMJOB)
 
 {Explain: "SBMJOB submits a program for asynchronous/batch execution, similar to
 publishing a message to a job queue or scheduling a background worker."}
@@ -526,7 +594,7 @@ publishing a message to a job queue or scheduling a background worker."}
 | Program | Submitted Program | Job Queue | Job Description | Parameters |
 |---------|------------------|-----------|-----------------|------------|
 
-### 6.3 Error Handling (MONMSG)
+### 6.4 Error Handling (MONMSG)
 
 {Explain: "MONMSG is the AS400 error trap mechanism, similar to try/catch. It catches
 specific system message IDs and executes recovery actions."}
@@ -534,7 +602,7 @@ specific system message IDs and executes recovery actions."}
 | Program | Error Code(s) | Action Taken |
 |---------|--------------|-------------|
 
-### 6.4 Message Files & User Messages
+### 6.5 Message Files & User Messages
 
 {Explain: "Message Files (MSGF) are catalogs of predefined messages with substitution
 parameters, similar to i18n resource bundles or error code registries. Programs
@@ -543,7 +611,7 @@ reference messages by ID rather than hardcoding text."}
 | Message File | Message ID | Message Text | Severity | Referenced By | Context |
 |-------------|-----------|-------------|----------|--------------|---------|
 
-### 6.5 Dynamic Program Calls & Runtime Command Execution
+### 6.6 Dynamic Program Calls & Runtime Command Execution
 
 {Explain: "Some calls resolve the target program at runtime from a variable rather than
 a hardcoded name. QCMDEXC is an API that executes an arbitrary command string -- like
@@ -552,7 +620,7 @@ eval() or subprocess.exec()."}
 | Source Program | Target | Resolution | Pattern Description |
 |---------------|--------|-----------|---------------------|
 
-### 6.6 S/36 Legacy Patterns
+### 6.7 S/36 Legacy Patterns
 
 {Explain: "System/36 (S/36) was the predecessor to AS400. Some codebases retain S/36
 conventions like $-prefixed subroutine names and OCL (Operation Control Language)
@@ -561,7 +629,7 @@ commands. These represent the oldest code layer."}
 | Program | Pattern | Description |
 |---------|---------|-------------|
 
-### 6.7 Indicator-Based Logic
+### 6.8 Indicator-Based Logic
 
 {Explain: "AS400 RPG uses numbered boolean flags (*IN01 through *IN99) instead of named
 variables for screen conditioning and flow control. Each indicator is a single bit
@@ -570,7 +638,7 @@ identified only by its number. This is one of the most significant patterns to r
 | Program | Indicator(s) | Purpose |
 |---------|-------------|---------|
 
-### 6.8 Legacy Data Movement (MOVE/MOVEL)
+### 6.9 Legacy Data Movement (MOVE/MOVEL)
 
 {Explain: "MOVE and MOVEL are RPG assignment operations that copy data between fields
 with implicit type conversion. MOVEL is left-justified, MOVE is right-justified.
@@ -596,7 +664,9 @@ its modern replacement. Example: "OPNQRYF dynamic queries → parameterized SQL"
 WHY the AS400 approach won't work and WHAT the modern alternative looks like.
 Example: "*LDA position-based parameter passing → explicit API request/response models",
 "QTEMP workfile staging → CTEs or temp tables in SQL, or in-memory processing",
-"Indicator-based screen logic → state management with named boolean properties"}
+"Indicator-based screen logic → state management with named boolean properties",
+"Library list manipulation → explicit database schema/catalog selection, connection
+strings, or tenant-aware data access layers"}
 
 ### 7.3 Eliminate (AS400-only, no modern equivalent needed)
 {Items that exist only because of AS400 platform constraints and serve no purpose
