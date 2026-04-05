@@ -4,17 +4,17 @@ LegacyLens is a set of Claude Code skills that analyze AS400/iSeries programs an
 
 ## Skills
 
-### `/analyze <ProgramName>`
+### `/legacylens-analyze <ProgramName>`
 
 Full modernization analysis. Traces the complete call stack, resolves file dependencies (logical-to-physical file mapping), identifies data areas, QTEMP temporary files, message files, dynamic calls, and AS400-specific constructs. Produces a markdown report in `output/`.
 
-Example: `/analyze TF410CL`
+Example: `/legacylens-analyze TF410CL`
 
-### `/trace <ProgramName>`
+### `/legacylens-trace <ProgramName>`
 
-Lightweight call-tree trace. Shows the call hierarchy with per-program file and data area counts directly in the conversation. Good for quick exploration before running a full `/analyze`.
+Lightweight call-tree trace. Shows the call hierarchy with per-program file and data area counts directly in the conversation. Good for quick exploration before running a full `/legacylens-analyze`.
 
-Example: `/trace AR300`
+Example: `/legacylens-trace AR300`
 
 ## Project Structure
 
@@ -52,4 +52,4 @@ output/
 1. Place AS400 source under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 2. Place cross-reference CSVs in `metadata/` (same column format as existing files)
 3. Optionally place MSGF JSON exports in `as400/{ClientName}/msgf/`
-4. Run `/analyze <ProgramName>` -- the skills will auto-discover the new client
+4. Run `/legacylens-analyze <ProgramName>` -- the skills will auto-discover the new client

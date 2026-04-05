@@ -30,13 +30,13 @@ LegacyLens analyzes AS400 source code and metadata to produce modernization repo
 Open a terminal in the project root and start Claude Code, then:
 
 ```
-/analyze <ProgramName>
+/legacylens-analyze <ProgramName>
 ```
 
 Produces a full modernization report saved to `output/<ProgramName>_analysis.md`.
 
 ```
-/trace <ProgramName>
+/legacylens-trace <ProgramName>
 ```
 
 Quick call-tree trace output directly to the conversation -- useful for exploration before a full analysis.
@@ -44,7 +44,7 @@ Quick call-tree trace output directly to the conversation -- useful for explorat
 ### Example
 
 ```
-/analyze TF410CL
+/legacylens-analyze TF410CL
 ```
 
 This will:
@@ -163,7 +163,7 @@ Array of message objects:
 1. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 2. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `metadata/`. Use the same column format as existing files.
 3. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
-4. **Run analysis**: `/analyze <ProgramName>` -- the skills auto-discover the new client's directory structure
+4. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the new client's directory structure
 
 ---
 
