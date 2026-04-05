@@ -16,6 +16,12 @@ Lightweight call-tree trace. Shows the call hierarchy with per-program file and 
 
 Example: `/legacylens-trace AR300`
 
+### `/legacylens-init [ClientName]`
+
+Setup validator. Checks the `as400/` folder structure for required and optional inputs, reports what is present/missing, and guides the user on how to onboard a new client. Run this before your first `/legacylens-analyze` for a new client.
+
+Example: `/legacylens-init ARG`
+
 ## Project Structure
 
 ```

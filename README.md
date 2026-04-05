@@ -41,6 +41,12 @@ Produces a full modernization report saved to `output/<ProgramName>_LegacyLens_a
 
 Quick call-tree trace output directly to the conversation -- useful for exploration before a full analysis.
 
+```
+/legacylens-init [ClientName]
+```
+
+Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Run this before your first analysis for a new client.
+
 ### Example
 
 ```
@@ -89,6 +95,7 @@ LegacyLens/
 |   +-- settings.json               # Team-shared permissions
 |   +-- skills/                     # LegacyLens analysis skills
 |       +-- legacylens-analyze/     # Full modernization report skill
+|       +-- legacylens-init/        # Setup validator and onboarding guide
 |       +-- legacylens-trace/       # Quick call-tree trace skill
 |
 +-- CLAUDE.md                       # Project guide for Claude Code
