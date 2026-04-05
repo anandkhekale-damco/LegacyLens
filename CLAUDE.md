@@ -31,7 +31,7 @@ as400/{Client}/                     # One folder per client (self-contained)
         *.json
 
 output/                             # Generated analysis reports
-    {ProgramName}_analysis.md
+    {ProgramName}_LegacyLens_analysis_{date}-{time}.md
 ```
 
 ## Key Conventions

@@ -92,6 +92,12 @@ final report's Verification section.
 ### 1.3 Resolve the Entry Point Program
 
 1. Search for the program: `find as400/ -iname "{ProgramName}.*"` (case-insensitive).
+   **OCL entry point rule**: If the search returns BOTH an OCL/OCL36 file AND a
+   CLP/RPGLE/RPG file with the same base name, the OCL is the true entry point.
+   The OCL typically performs setup (display checks, Y2K calls, library overrides)
+   and then `// CALL`s the main program. Treat the OCL as depth 0 and the program
+   it calls as depth 1 in the call tree. Read and analyze the OCL source for S/36
+   patterns (// LOAD, // CALL, // FILE, // LIBRARY, etc.).
 2. **If not found by exact name, apply Synon/2E naming fallback**:
    In Synon/CA 2E generated systems, the compiled program object name (stored in xref)
    often differs from the source member name. Common patterns:
@@ -116,7 +122,7 @@ final report's Verification section.
    - `.OCL`, `.OCL36` = System/36 OCL
 4. If found in multiple libraries, prefer the production library (typically the one
    without "SYN" in the name). Note all locations found.
-5. Read the first 50 lines to extract the module overview (system, purpose, programmer, date).
+5. Read the first 50 lines to extract the module overview (system, purpose, programmer, date). Do not extract revision history.
 
 ---
 
@@ -276,7 +282,6 @@ For each program in the call tree, read the source file and extract:
 - `CHAIN` / `READ` / `READP` / `READE` / `READPE` -- file read operations
 - `WRITE` / `UPDATE` / `DELETE` -- file modification operations
 - `EXFMT` / `EXSR` -- display file format and subroutine execution
-- `*INxx` indicators -- document which indicators are used and their purpose
 - `BEGSR` / `ENDSR` -- subroutine structure
 - `MOVE` / `MOVEL` / `MOVEA` -- legacy data movement operations
 - D-spec `msgfil` or `MSGFIL` field with `INZ('msgfname')` -- message file reference
@@ -411,7 +416,9 @@ Consolidated across entire call tree:
 
 ## Phase 5: Report Generation
 
-Write the report to `output/{ProgramName}_analysis.md`.
+Write the report to `output/{ProgramName}_LegacyLens_analysis_{date}-{time}.md`
+where `{date}` is `yyyy-mm-dd` and `{time}` is `hh.mm.ss` (current timestamp at
+report generation time).
 
 IMPORTANT: The report audience is modern solutions architects who may NOT have AS400
 experience. Every AS400-specific term MUST be followed by a brief plain-language
@@ -430,7 +437,6 @@ explanation in parentheses on first use. Examples:
 - "Message File / MSGF (a catalog of predefined messages with substitution parameters, like i18n resource bundles)"
 - "CALL PGM (invokes another program, equivalent to a function/API call)"
 - "*LDA / Local Data Area (a 1024-byte shared memory block scoped to the job, used for implicit parameter passing)"
-- "Indicators (*INxx) (boolean flags set by position number, used for screen conditioning and flow control)"
 - "MOVE/MOVEL (data assignment operations -- MOVEL=left-justified, MOVE=right-justified)"
 - "EXFMT (write screen + wait for user input, like rendering a form and awaiting submit)"
 - "Subfile (a scrollable list/grid of records on a 5250 terminal screen, like a data table component)"
@@ -464,8 +470,8 @@ Use this structure:
 ## 1. Module Overview
 
 {Extracted from source header: system name, program purpose, original programmer,
-creation date, key modification history. Explain what the module does in plain
-business terms.}
+creation date. Explain what the module does in plain business terms.
+Do NOT include revision history -- it adds no value for modernization planning.}
 
 ---
 
@@ -629,16 +635,7 @@ commands. These represent the oldest code layer."}
 | Program | Pattern | Description |
 |---------|---------|-------------|
 
-### 6.8 Indicator-Based Logic
-
-{Explain: "AS400 RPG uses numbered boolean flags (*IN01 through *IN99) instead of named
-variables for screen conditioning and flow control. Each indicator is a single bit
-identified only by its number. This is one of the most significant patterns to redesign."}
-
-| Program | Indicator(s) | Purpose |
-|---------|-------------|---------|
-
-### 6.9 Legacy Data Movement (MOVE/MOVEL)
+### 6.8 Legacy Data Movement (MOVE/MOVEL)
 
 {Explain: "MOVE and MOVEL are RPG assignment operations that copy data between fields
 with implicit type conversion. MOVEL is left-justified, MOVE is right-justified.
@@ -664,7 +661,6 @@ its modern replacement. Example: "OPNQRYF dynamic queries → parameterized SQL"
 WHY the AS400 approach won't work and WHAT the modern alternative looks like.
 Example: "*LDA position-based parameter passing → explicit API request/response models",
 "QTEMP workfile staging → CTEs or temp tables in SQL, or in-memory processing",
-"Indicator-based screen logic → state management with named boolean properties",
 "Library list manipulation → explicit database schema/catalog selection, connection
 strings, or tenant-aware data access layers"}
 

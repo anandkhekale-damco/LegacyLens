@@ -33,7 +33,7 @@ Open a terminal in the project root and start Claude Code, then:
 /legacylens-analyze <ProgramName>
 ```
 
-Produces a full modernization report saved to `output/<ProgramName>_analysis.md`.
+Produces a full modernization report saved to `output/<ProgramName>_LegacyLens_analysis_<date>-<time>.md`.
 
 ```
 /legacylens-trace <ProgramName>
@@ -53,7 +53,7 @@ This will:
 3. Read each program's source to detect dynamic calls, data areas, QTEMP usage, and message references
 4. Resolve all logical files to their underlying physical files
 5. Look up message text from MSGF JSON exports
-6. Generate a structured markdown report at `output/TF410CL_analysis.md`
+6. Generate a structured markdown report at `output/TF410CL_LegacyLens_analysis_2026-04-05-09.13.21.md`
 
 ---
 
@@ -83,7 +83,7 @@ LegacyLens/
 |           +-- pflf_export_*.csv   # Physical file to logical file mappings
 |
 +-- output/                         # Generated analysis reports
-|   +-- {ProgramName}_analysis.md
+|   +-- {ProgramName}_LegacyLens_analysis_{date}-{time}.md
 |
 +-- .claude/                        # Claude Code configuration
 |   +-- settings.json               # Team-shared permissions
@@ -213,7 +213,7 @@ Array of message objects:
   +-------------------+
          |
          v
-  Output: output/{ProgramName}_analysis.md
+  Output: output/{ProgramName}_LegacyLens_analysis_{date}-{time}.md
 ```
 
 ### Dynamic Call Resolution
