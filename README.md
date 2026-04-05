@@ -30,6 +30,12 @@ LegacyLens analyzes AS400 source code and metadata to produce modernization repo
 Open a terminal in the project root and start Claude Code, then:
 
 ```
+/legacylens-init [ClientName]
+```
+
+Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Run this before your first analysis for a new client.
+
+```
 /legacylens-analyze <ProgramName>
 ```
 
@@ -40,12 +46,6 @@ Produces a full modernization report saved to `output/<ProgramName>_LegacyLens_a
 ```
 
 Quick call-tree trace output directly to the conversation -- useful for exploration before a full analysis.
-
-```
-/legacylens-init [ClientName]
-```
-
-Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Run this before your first analysis for a new client.
 
 ### Example
 
