@@ -170,7 +170,8 @@ Array of message objects:
 2. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 3. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `as400/{ClientName}/metadata/`
 4. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
-5. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the client from the program location
+5. **Validate setup**: `/legacylens-init {ClientName}` -- checks all inputs and reports what is missing
+6. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the client from the program location
 
 ---
 

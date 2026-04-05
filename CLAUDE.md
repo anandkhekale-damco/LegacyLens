@@ -53,4 +53,5 @@ output/                             # Generated analysis reports
 2. Place AS400 source under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 3. Place cross-reference CSVs in `as400/{ClientName}/metadata/`
 4. Optionally place MSGF JSON exports in `as400/{ClientName}/msgf/`
-5. Run `/legacylens-analyze <ProgramName>` -- the skills will auto-discover the new client
+5. Run `/legacylens-init {ClientName}` -- validates all inputs and reports what is missing
+6. Run `/legacylens-analyze <ProgramName>` -- the skills will auto-discover the new client
