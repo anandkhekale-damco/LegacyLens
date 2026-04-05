@@ -27,14 +27,18 @@ names, or paths -- discover everything dynamically.
 
 1. Glob for `as400/*/*` to find the client/library directory structure.
    Expected pattern: `as400/{Client}/{Library}/{SourceType}/{Program}.{Extension}`
-   There may also be: `as400/{Client}/msgf/` for message file exports.
+   Each client folder may also contain:
+   - `as400/{Client}/metadata/` for cross-reference CSVs
+   - `as400/{Client}/msgf/` for message file exports
 
-2. Glob for `metadata/pflf_export_*.csv` and `metadata/xref_export_*.csv`.
-   If multiple files match, use the most recent (by filename timestamp).
+2. Glob for `as400/*/metadata/xref_export_*.csv` and `as400/*/metadata/pflf_export_*.csv`.
+   If multiple files match per client, use the most recent (by filename timestamp).
 
 3. Glob for `as400/*/msgf/*.json` to find message file JSON exports.
 
 4. Record all discovered paths for use in subsequent phases.
+   Note: All metadata and source are scoped to the client folder where the requested
+   program is found. When the program is located, use that client's metadata and msgf.
 
 ### 1.2 Validate Required Artifacts
 
@@ -42,10 +46,10 @@ Check that these exist. For each missing artifact, report its status:
 
 | Artifact | How to Find | Critical? |
 |----------|------------|-----------|
-| AS400 source tree | `as400/` with at least one library containing source files | YES -- stop if missing |
-| Program cross-reference | `metadata/xref_export_*.csv` | YES -- stop if missing |
-| PF-LF cross-reference | `metadata/pflf_export_*.csv` | NO -- warn, skip LF-to-PF resolution |
-| Message file exports | `as400/*/msgf/*.json` | NO -- warn, skip message text lookup |
+| AS400 source tree | `as400/{Client}/` with at least one library containing source files | YES -- stop if missing |
+| Program cross-reference | `as400/{Client}/metadata/xref_export_*.csv` | YES -- stop if missing |
+| PF-LF cross-reference | `as400/{Client}/metadata/pflf_export_*.csv` | NO -- warn, skip LF-to-PF resolution |
+| Message file exports | `as400/{Client}/msgf/*.json` | NO -- warn, skip message text lookup |
 | The requested program | Find `{ProgramName}.*` in the source tree | YES -- stop if missing |
 
 If a CRITICAL artifact is missing, STOP and tell the user exactly what is missing and
@@ -95,7 +99,7 @@ resolve dynamic calls that the xref cannot capture.
 1. Grep the xref CSV for all rows where the first column (Caller Object) matches the
    program name:
    ```
-   grep '^"{PROGRAMNAME}",' metadata/xref_export_*.csv
+   grep '^"{PROGRAMNAME}",' as400/{Client}/metadata/xref_export_*.csv
    ```
 
 2. From those rows, extract entries where File Type = `"*PGM"` and File Usage = `"0"`.
@@ -136,7 +140,7 @@ When you detect this pattern:
 1. Mark the current program as a "dispatcher".
 2. Look UPSTREAM: grep the xref for this dispatcher as the Called Object:
    ```
-   grep ',"DISPATCHER_NAME",' metadata/xref_export_*.csv
+   grep ',"DISPATCHER_NAME",' as400/{Client}/metadata/xref_export_*.csv
    ```
 3. Read the upstream callers' source files to find what literal program name they
    pass to the dispatcher.
@@ -293,7 +297,7 @@ fields, etc.):
 
 For every program in the call tree, grep the xref CSV for `*FILE` entries:
 ```
-grep '^"{PROGRAMNAME}",' metadata/xref_export_*.csv | grep '"*FILE"'
+grep '^"{PROGRAMNAME}",' as400/{Client}/metadata/xref_export_*.csv | grep '"*FILE"'
 ```
 
 Map File Usage codes to human-readable labels:
@@ -315,7 +319,7 @@ For each file referenced, determine if it is a Logical File (LF) or Physical Fil
 - Check the file extension in source: `.LF` = logical, `.PF` = physical
 - Or grep the PFLF CSV for the file name in the Logical File column:
   ```
-  grep ',"FILENAME",' metadata/pflf_export_*.csv
+  grep ',"FILENAME",' as400/{Client}/metadata/pflf_export_*.csv
   ```
   If found, the first column is the Base Physical File.
 

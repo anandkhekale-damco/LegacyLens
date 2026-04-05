@@ -1,13 +1,9 @@
 # Local Claude Code settings (personal preferences, not shared)
 .claude/settings.local.json
 
-# AS400 source code (added per client, not committed)
+# Client data (source, metadata, message files -- added per client, not committed)
 as400/*
 !as400/.gitkeep
-
-# Metadata cross-reference files (added per client, not committed)
-metadata/*
-!metadata/.gitkeep
 
 # Generated analysis reports (not committed)
 output/*

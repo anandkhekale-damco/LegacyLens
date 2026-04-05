@@ -23,8 +23,9 @@ Output results directly to the conversation.
 ## Step 1: Discovery
 
 1. Glob for `as400/*/*` to find the directory structure.
-2. Glob for `metadata/xref_export_*.csv` (use most recent if multiple).
-3. Find the requested program's source file: `find as400/ -iname "{ProgramName}.*"`
+2. Find the requested program's source file: `find as400/ -iname "{ProgramName}.*"`
+3. From the client folder where the program is found, glob for
+   `as400/{Client}/metadata/xref_export_*.csv` (use most recent if multiple).
 4. **Synon/2E naming fallback**: If a program is not found by exact name, the compiled
    program object name (in xref) may differ from the source member name. Common:
    suffix `GC` → source `SC`, suffix `GR` → source `SR`. Try:
@@ -41,7 +42,7 @@ If the xref CSV or program source cannot be found, tell the user what's missing 
 
 Grep the xref CSV for program calls:
 ```
-grep '^"{PROGRAMNAME}",' metadata/xref_export_*.csv
+grep '^"{PROGRAMNAME}",' as400/{Client}/metadata/xref_export_*.csv
 ```
 Filter to `*PGM` entries with File Usage `0`. Recurse for each called program
 (max depth 10, maintain visited set).
@@ -86,7 +87,7 @@ For each program in the tree, read its source and detect:
 
 For each program in the call tree, grep the xref for quick summary counts:
 ```
-grep '^"{PROGRAMNAME}",' metadata/xref_export_*.csv
+grep '^"{PROGRAMNAME}",' as400/{Client}/metadata/xref_export_*.csv
 ```
 
 Count by File Type:

@@ -76,12 +76,11 @@ LegacyLens/
 |       |   +-- QTXTSRC/           # Text/generated source
 |       |   +-- ...                 # Other source types as needed
 |       +-- msgf/                   # Message file exports (JSON)
-|           +-- HSMSGF_*.json       # Application message catalog
-|           +-- ...
-|
-+-- metadata/                       # Cross-reference data
-|   +-- xref_export_*.csv           # Program cross-reference (calls, files, data areas)
-|   +-- pflf_export_*.csv           # Physical file to logical file mappings
+|       |   +-- HSMSGF_*.json       # Application message catalog
+|       |   +-- ...
+|       +-- metadata/               # Client-specific cross-reference data
+|           +-- xref_export_*.csv   # Program cross-reference (calls, files, data areas)
+|           +-- pflf_export_*.csv   # Physical file to logical file mappings
 |
 +-- output/                         # Generated analysis reports
 |   +-- {ProgramName}_analysis.md
@@ -117,7 +116,7 @@ LegacyLens/
 
 ## Metadata Format
 
-### Cross-Reference CSV (`xref_export_*.csv`)
+### Cross-Reference CSV (`as400/{Client}/metadata/xref_export_*.csv`)
 
 | Column | Description |
 |--------|-------------|
@@ -130,7 +129,7 @@ LegacyLens/
 | Location | Library where the object resides |
 | Active | Yes/No |
 
-### PF-LF Mapping CSV (`pflf_export_*.csv`)
+### PF-LF Mapping CSV (`as400/{Client}/metadata/pflf_export_*.csv`)
 
 | Column | Description |
 |--------|-------------|
@@ -139,7 +138,7 @@ LegacyLens/
 | Updated | Last update timestamp |
 | Created | Creation timestamp |
 
-### Message File JSON (`msgf/*.json`)
+### Message File JSON (`as400/{Client}/msgf/*.json`)
 
 Array of message objects:
 ```json
@@ -160,10 +159,11 @@ Array of message objects:
 
 ## Adding a New Client
 
-1. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
-2. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `metadata/`. Use the same column format as existing files.
-3. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
-4. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the new client's directory structure
+1. **Create client folder**: `as400/{ClientName}/`
+2. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
+3. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `as400/{ClientName}/metadata/`
+4. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
+5. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the client from the program location
 
 ---
 
