@@ -19,6 +19,37 @@ resolve all dependencies, and produce a structured report for a modern solutions
 Follow these phases exactly. Do NOT skip phases. Do NOT hardcode client names, library
 names, or paths -- discover everything dynamically.
 
+### STRICT RULES -- FULL COVERAGE IS MANDATORY
+
+These rules are non-negotiable. Violation produces an incomplete report that is unusable
+for modernization planning.
+
+1. **EVERY program in the call tree MUST have its source file located, read, and analyzed
+   -- regardless of depth.** There is no concept of "Not searched" or "analysis deferred."
+   Depth-2, depth-3, depth-4 programs receive the same analysis as depth-1 programs.
+
+2. **Source resolution happens for ALL programs in a single pass.** After building the
+   complete call tree (Phase 2), immediately find source files for every program at every
+   depth before starting Phase 3. Use parallel agents to handle volume.
+
+3. **SBMJOB targets and dynamic call targets are first-class programs.** Programs
+   discovered via SBMJOB commands (in message text, CLP source, or QCMDEXC patterns)
+   and programs resolved from dynamic calls (variable-based CALL) must also have their
+   source located and analyzed. Their downstream calls (e.g., print programs called from
+   a SBMJOB CLP) must also be traced.
+
+4. **The Call Details table must never contain "Not searched" or "Not analyzed".** Every
+   row must show one of:
+   - Source type + "Yes" (source found and analyzed)
+   - "No (Synon/2E shipped runtime)" -- for standard Synon objects without source
+   - "No (IBM system API)" -- for Q* system programs
+   - "No (not in source repository)" -- source genuinely missing, flagged for follow-up
+   Print programs, report programs, and batch programs receive the same treatment as
+   interactive programs -- find the source, read it, extract F-specs/calls/data areas.
+
+5. **File resolution covers ALL depths.** Every *FILE reference from every program in the
+   call tree must be resolved through the PFLF CSV. Do not resolve only depth-1 files.
+
 ---
 
 ## Phase 1: Discovery & Validation
