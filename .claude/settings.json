@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(legacylens-analyze)",
+      "Skill(legacylens-trace)",
+      "Read",
+      "Write(output/**)",
+      "Glob",
+      "Grep"
+    ]
+  }
+}
