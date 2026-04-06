@@ -1,10 +1,10 @@
 ---
-name: legacylens-init
+name: legacylens-check
 description: >
   Check and guide the user on what inputs are needed in the as400/ folder for
   /legacylens-analyze to work. Validates existing folder structure, metadata files,
   source code, and message files. Reports what is present, what is missing, and
-  exactly how to fix gaps. Use when the user asks to "init", "setup", "check setup",
+  exactly how to fix gaps. Use when the user asks to "check", "validate", "check setup",
   "what do I need", or wants to onboard a new client for analysis.
 argument-hint: "[ClientName] (optional -- checks all clients if omitted)"
 allowed-tools: ["Read", "Glob", "Grep", "Bash"]
@@ -199,7 +199,7 @@ Print this when no clients exist or the user is onboarding a new client:
 
    Export message file contents as JSON for message text resolution.
 
-6. Run: /legacylens-init {ClientName}
+6. Run: /legacylens-check {ClientName}
    to verify everything is in place.
 
 7. Run: /legacylens-analyze <ProgramName>

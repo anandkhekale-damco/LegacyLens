@@ -30,7 +30,7 @@ LegacyLens analyzes AS400 source code and metadata to produce modernization repo
 Open a terminal in the project root and start Claude Code, then:
 
 ```
-/legacylens-init [ClientName]
+/legacylens-check [ClientName]
 ```
 
 Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Run this before your first analysis for a new client.
@@ -95,7 +95,7 @@ LegacyLens/
 |   +-- settings.json               # Team-shared permissions
 |   +-- skills/                     # LegacyLens analysis skills
 |       +-- legacylens-analyze/     # Full modernization report skill
-|       +-- legacylens-init/        # Setup validator and onboarding guide
+|       +-- legacylens-check/        # Setup validator and onboarding guide
 |       +-- legacylens-trace/       # Quick call-tree trace skill
 |
 +-- CLAUDE.md                       # Project guide for Claude Code
@@ -170,7 +170,7 @@ Array of message objects:
 2. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 3. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `as400/{ClientName}/metadata/`
 4. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
-5. **Validate setup**: `/legacylens-init {ClientName}` -- checks all inputs and reports what is missing
+5. **Validate setup**: `/legacylens-check {ClientName}` -- checks all inputs and reports what is missing
 6. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the client from the program location
 
 ---

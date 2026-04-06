@@ -16,11 +16,11 @@ Lightweight call-tree trace. Shows the call hierarchy with per-program file and 
 
 Example: `/legacylens-trace AR300`
 
-### `/legacylens-init [ClientName]`
+### `/legacylens-check [ClientName]`
 
 Setup validator. Checks the `as400/` folder structure for required and optional inputs, reports what is present/missing, and guides the user on how to onboard a new client. Run this before your first `/legacylens-analyze` for a new client.
 
-Example: `/legacylens-init ARG`
+Example: `/legacylens-check ARG`
 
 ## Project Structure
 
@@ -53,5 +53,5 @@ output/                             # Generated analysis reports
 2. Place AS400 source under `as400/{ClientName}/{LibraryName}/{SourceType}/`
 3. Place cross-reference CSVs in `as400/{ClientName}/metadata/`
 4. Optionally place MSGF JSON exports in `as400/{ClientName}/msgf/`
-5. Run `/legacylens-init {ClientName}` -- validates all inputs and reports what is missing
+5. Run `/legacylens-check {ClientName}` -- validates all inputs and reports what is missing
 6. Run `/legacylens-analyze <ProgramName>` -- the skills will auto-discover the new client
