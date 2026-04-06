@@ -18,7 +18,7 @@ Example: `/legacylens-trace AR300`
 
 ### `/legacylens-check [ClientName]`
 
-Setup validator. Checks the `as400/` folder structure for required and optional inputs, reports what is present/missing, and guides the user on how to onboard a new client. Run this before your first `/legacylens-analyze` for a new client.
+Setup validator. Checks the `as400/` folder structure for required and optional inputs, reports what is present/missing, and guides the user on how to onboard a new client. Produces a markdown report in `output/`. Run this before your first `/legacylens-analyze` for a new client.
 
 Example: `/legacylens-check ARG`
 
@@ -36,8 +36,9 @@ as400/{Client}/                     # One folder per client (self-contained)
     msgf/                           # Client-specific message file exports (JSON)
         *.json
 
-output/                             # Generated analysis reports
+output/                             # Generated reports
     {ProgramName}_LegacyLens_analysis_{date}-{time}.md
+    LegacyLens-{Client}-initialCheck-{date}-{time}.md
 ```
 
 ## Key Conventions

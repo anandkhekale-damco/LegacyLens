@@ -33,7 +33,7 @@ Open a terminal in the project root and start Claude Code, then:
 /legacylens-check [ClientName]
 ```
 
-Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Run this before your first analysis for a new client.
+Validates the `as400/` folder structure, checks for required metadata files, and guides you through onboarding a new client. Produces a report saved to `output/LegacyLens-<ClientName>-initialCheck-<date>-<time>.md`. Run this before your first analysis for a new client.
 
 ```
 /legacylens-analyze <ProgramName>
@@ -88,8 +88,9 @@ LegacyLens/
 |           +-- xref_export_*.csv   # Program cross-reference (calls, files, data areas)
 |           +-- pflf_export_*.csv   # Physical file to logical file mappings
 |
-+-- output/                         # Generated analysis reports
++-- output/                         # Generated reports
 |   +-- {ProgramName}_LegacyLens_analysis_{date}-{time}.md
+|   +-- LegacyLens-{Client}-initialCheck-{date}-{time}.md
 |
 +-- .claude/                        # Claude Code configuration
 |   +-- settings.json               # Team-shared permissions

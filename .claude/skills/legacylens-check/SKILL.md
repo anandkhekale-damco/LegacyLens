@@ -7,7 +7,7 @@ description: >
   exactly how to fix gaps. Use when the user asks to "check", "validate", "check setup",
   "what do I need", or wants to onboard a new client for analysis.
 argument-hint: "[ClientName] (optional -- checks all clients if omitted)"
-allowed-tools: ["Read", "Glob", "Grep", "Bash"]
+allowed-tools: ["Read", "Glob", "Grep", "Bash", "Write"]
 ---
 
 # LegacyLens: Setup Validator & Guide
@@ -139,10 +139,21 @@ different systems or libraries.
 
 ## Step 6: Summary Report
 
-Print a summary table per client:
+Build the full report as a markdown string and write it to:
+`output/LegacyLens-{ClientName}-initialCheck-{yyyy-mm-dd}-{hh.mm.ss}.md`
+
+Use the machine's local date and time for the timestamp (run `date` via Bash to get it). Create the `output/` directory
+if it does not exist (use Bash `mkdir -p output`).
+
+The report file must contain the complete results from all steps above, structured
+as follows:
 
 ```
-## LegacyLens Setup Status: {ClientName}
+# LegacyLens Initial Check: {ClientName}
+
+**Generated:** {yyyy-mm-dd} {hh:mm:ss} (local time)
+
+## Setup Status
 
 | Check | Status | Details |
 |-------|--------|---------|
@@ -151,7 +162,38 @@ Print a summary table per client:
 | PF-LF mapping (pflf) | OK / MISSING | {N} rows in {filename} |
 | Message files (msgf) | OK / NONE | {N} files |
 | Source-metadata alignment | OK / LOW | {X}% match on sample |
+
+## Source Code
+
+{Library names, file counts by type -- the full breakdown from Step 2}
+
+## Cross-Reference Metadata
+
+{xref details from Step 3.1 -- filename, row count, header validation}
+
+## PF-LF Mapping
+
+{pflf details from Step 3.2 -- filename, row count, or warning if missing}
+
+## Message Files
+
+{msgf details from Step 4 -- file list and validation, or info if missing}
+
+## Source-Metadata Alignment
+
+{Cross-check results from Step 5 -- sample programs, match/miss, match rate}
+
+## Conclusion
+
+{If everything OK: "Ready to analyze. Run `/legacylens-analyze <ProgramName>`"}
+{If critical items missing: what needs to be added and where}
+{If optional items missing: what will be limited in the report}
 ```
+
+Include any CRITICAL/WARNING/INFO flags inline in the relevant sections.
+
+After writing the file, print the output file path to the user and also print
+the summary status table in the conversation.
 
 Then:
 - If everything is OK: print "Ready to analyze. Run `/legacylens-analyze <ProgramName>`"
