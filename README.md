@@ -184,46 +184,46 @@ Array of message objects:
 
 ```
   Input: Program Name
-         |
-         v
-  +-------------------+
-  | Phase 1: Discovery |  Auto-detect project layout, validate artifacts,
-  |                     |  locate the entry point source file
-  +-------------------+
-         |
-         v
-  +-------------------+
-  | Phase 2: Call Tree |  Build call hierarchy from cross-reference metadata,
-  |                     |  then scan source code to resolve dynamic calls
-  |                     |  (CALL PGM(&var), dispatchers, QCMDEXC, S/36 OCL)
-  +-------------------+
-         |
-         v
-  +-------------------+
-  | Phase 3: Source    |  Read each program's source to extract file usage,
-  |          Analysis  |  data areas, QTEMP files, messages, indicators,
-  |                     |  subroutines, and platform-specific patterns
-  +-------------------+
-         |
-         v
-  +-------------------+
-  | Phase 4: File      |  Resolve logical files to physical files using
-  |          Resolution|  PF-LF metadata; trace file override chains
-  +-------------------+
-         |
-         v
-  +-------------------+
-  | Phase 5: Report    |  Generate structured markdown report with
-  |          Generation|  plain-language explanations of all AS400 terms
-  +-------------------+
-         |
-         v
-  +-------------------+
-  | Phase 6: Verify    |  Cross-check xref vs source, flag gaps,
-  |                     |  document unresolved references
-  +-------------------+
-         |
-         v
+            |
+            v
+  +----------------------+
+  | Phase 1: Discovery   |  Auto-detect project layout, validate artifacts,
+  |                      |  locate the entry point source file
+  +----------------------+
+            |
+            v
+  +----------------------+
+  | Phase 2: Call Tree   |  Build call hierarchy from cross-reference metadata,
+  |                      |  then scan source code to resolve dynamic calls
+  |                      |  (CALL PGM(&var), dispatchers, QCMDEXC, S/36 OCL)
+  +----------------------+
+            |
+            v
+  +----------------------+
+  | Phase 3: Source      |  Read each program's source to extract file usage,
+  |          Analysis    |  data areas, QTEMP files, messages, indicators,
+  |                      |  subroutines, and platform-specific patterns
+  +----------------------+
+            |
+            v
+  +----------------------+
+  | Phase 4: File        |  Resolve logical files to physical files using
+  |          Resolution  |  PF-LF metadata; trace file override chains
+  +----------------------+
+            |
+            v
+  +----------------------+
+  | Phase 5: Report      |  Generate structured markdown report with
+  |          Generation  |  plain-language explanations of all AS400 terms
+  +----------------------+
+            |
+            v
+  +----------------------+
+  | Phase 6: Verify      |  Cross-check xref vs source, flag gaps,
+  |                      |  document unresolved references
+  +----------------------+
+            |
+            v
   Output: output/{ProgramName}_LegacyLens_analysis_{date}-{time}.md
 ```
 
