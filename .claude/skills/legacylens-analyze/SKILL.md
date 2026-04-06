@@ -243,8 +243,31 @@ For each program in the call tree, read the source file and extract:
 - `CALL PGM(xxx)` -- all program calls (static and dynamic)
 - `OVRDBF FILE(x) TOFILE(y)` -- file overrides (actual file = y)
 - `OPNQRYF` / `OPNSQLF` -- dynamic query patterns (document the selection criteria)
-- `CHGDTAARA` / `RTVDTAARA` / `CRTDTAARA` -- data area operations
-- `SBMJOB` -- submitted jobs (document CMD, JOBQ, JOBD)
+- **Data area operations** -- detect ALL data area usage, not just *LDA:
+  - `CRTDTAARA DTAARA(name)` -- creates a data area (named/user-created)
+  - `CHGDTAARA DTAARA(name) VALUE(...)` -- writes to a named data area
+  - `RTVDTAARA DTAARA(name) RTNVAR(&var)` -- reads from a named data area
+  - `DLTDTAARA DTAARA(name)` -- deletes a data area
+  - `CHGDTAARA DTAARA(*LDA ...)` / `RTVDTAARA DTAARA(*LDA ...)` -- local data area
+  - `CHGDTAARA DTAARA(*GDA ...)` / `RTVDTAARA DTAARA(*GDA ...)` -- group data area
+  - Extract the data area name, the operation (read/write/create/delete), and any
+    substring positions (e.g., `DTAARA(MYDA (5 10))` = positions 5-14)
+- `SBMJOB` -- submitted jobs (document CMD, JOBQ, JOBD, INLLIBL, CURLIB)
+- **Job description and job attribute operations** -- these define or alter the runtime
+  environment (library list, job queue, output queue, etc.):
+  - `SBMJOB ... JOBD(lib/jobd)` -- submits a job using a specific job description
+    (the JOBD carries the initial library list for the submitted job)
+  - `SBMJOB ... INLLIBL(lib1 lib2 ...)` -- overrides the JOBD's initial library list
+  - `SBMJOB ... CURLIB(lib)` -- overrides the current library for the submitted job
+  - `CHGJOB JOBD(lib/jobd)` -- changes the current job's job description at runtime
+  - `CHGJOB INLLIBL(lib1 lib2 ...)` -- changes the current job's library list
+  - `RTVJOBA JOBD(&var)` -- retrieves the current job's job description name
+  - `RTVJOBA USRLIBL(&var)` -- retrieves the current library list (already covered above)
+  - `RTVJOBD JOBD(name) INLLIBL(&var)` -- retrieves the initial library list from a JOBD
+  - `CHGJOBD JOBD(name) INLLIBL(...)` -- modifies a job description's library list
+  - Extract the JOBD name (and library qualifier), and any INLLIBL/CURLIB overrides.
+    This is critical for modernization because JOBDs implicitly control which database
+    and program versions a job uses via the library list.
 - `CRTDUPOBJ ... TOLIB(QTEMP)` / `CRTDUPOBJL` -- QTEMP file creation
 - `DLTF` / `CLRPFM` targeting QTEMP -- QTEMP cleanup
 - `MONMSG MSGID(xxx)` -- error monitoring
@@ -253,18 +276,28 @@ For each program in the call tree, read the source file and extract:
 - `RCVMSG ... MSGF(yyy)` -- message receiving
 - `RTVMSG MSGID(xxx) MSGF(yyy)` -- message retrieval
 - `OVRMSGF FILE(xxx) TOFILE(yyy)` -- message file override
-- `%SST(*LDA pos len)` -- local data area position mapping
-- `CHGDTAARA DTAARA(*LDA ...)` -- LDA writes
+- `%SST(*LDA pos len)` -- local data area position mapping (also covered by data area operations above)
 - `SNDRCVF` -- display file I/O
-- `CRTDTAQ` / `SNDDTAQ` / `RCVDTAQ` -- data queue operations
-- `SNDMSG` / `SNDBRKMSG` -- message queue operations
+- **Data queue operations**:
+  - `CRTDTAQ DTAQ(name)` -- creates a data queue
+  - `SNDDTAQ DTAQ(name) LIB(lib)` -- sends an entry to a data queue
+  - `RCVDTAQ DTAQ(name) LIB(lib)` -- receives an entry from a data queue
+  - `CLRDTAQ DTAQ(name)` -- clears a data queue
+  - `DLTDTAQ DTAQ(name)` -- deletes a data queue
+  - Extract the queue name, library, and operation type
+- **Message queue operations**:
+  - `SNDMSG MSG(...) TOUSR(user)` / `SNDMSG MSG(...) TOMSGQ(queue)` -- send message
+  - `SNDBRKMSG MSG(...) TOMSGQ(queue)` -- send break message
+  - `RCVMSG MSGQ(queue)` -- receive from a message queue
+  - `CRTMSGQ MSGQ(name)` -- create a message queue
+  - `CLRMSGQ MSGQ(name)` -- clear a message queue
+  - Extract the queue name, target user/queue, and operation type
 - **Library list changes** -- these alter the runtime search path for files and programs:
   - `ADDLIBLE LIB(xxx)` -- adds a library to the job library list (position: *FIRST, *LAST, *BEFORE, *AFTER)
   - `RMVLIBLE LIB(xxx)` -- removes a library from the job library list
   - `CHGLIBL LIBL(lib1 lib2 ...)` -- replaces the entire user portion of the library list
   - `CHGCURLIB CURLIB(xxx)` -- changes the current library (default for unqualified creates)
   - `EDTLIBL` -- interactive library list editor (rare in production code)
-  - `RTVJOBA USRLIBL(&var)` / `RTVJOBA CURLIB(&var)` -- retrieves the current library list
   Document which libraries are added/removed, the position, and whether the change is
   restored later (RMVLIBLE after processing). This is critical for modernization because
   library list order determines which version of a file or program is found at runtime.
@@ -286,6 +319,30 @@ For each program in the call tree, read the source file and extract:
 - `MOVE` / `MOVEL` / `MOVEA` -- legacy data movement operations
 - D-spec `msgfil` or `MSGFIL` field with `INZ('msgfname')` -- message file reference
 - I-spec literal initialization for MSGFIL (e.g., `I I 'HSMSGF' 1 10 MSGFIL`)
+- **Data area operations** -- detect ALL data area usage in RPG:
+  - D-spec `DTAARA` keyword: `D myfield ... DTAARA(MYDTAARA)` -- binds a field to a named data area
+  - D-spec `DTAARA(*VAR)`: dynamic data area name resolved at runtime
+  - `IN` opcode: `IN *LOCK MYDTAARA` or `IN MYDTAARA` -- reads a data area into its bound field
+  - `OUT` opcode: `OUT MYDTAARA` -- writes the field value back to the data area
+  - `UNLOCK` opcode: `UNLOCK MYDTAARA` -- releases the lock without writing
+  - `IN *DTAARA` / `OUT *DTAARA` -- operates on all data areas declared with DTAARA keyword
+  - Fixed-format `DEFINE` with `*DTAARA`: `C *DTAARA DEFINE MYDTAARA MYFIELD` -- defines a data area field
+  - Free-format `DCL-DS` with `DTAARA` keyword -- data structure bound to a data area
+  - Data areas accessed via QCMDEXC: `'CHGDTAARA'` / `'RTVDTAARA'` command strings
+  - Extract the data area name, whether it is *LDA/*GDA/named, and the operation (read/write/lock)
+- **Data queue operations** -- RPG programs call DTAQ APIs directly:
+  - `CALL 'QSNDDTAQ'` or `CALLP QSNDDTAQ(...)` -- send entry to a data queue
+  - `CALL 'QRCVDTAQ'` or `CALLP QRCVDTAQ(...)` -- receive entry from a data queue
+  - `CALL 'QCLRDTAQ'` or `CALLP QCLRDTAQ(...)` -- clear a data queue
+  - `CALL 'QMHQRDQD'` -- retrieve data queue description
+  - Data queue operations via QCMDEXC: `'SNDDTAQ'` / `'RCVDTAQ'` / `'CRTDTAQ'` command strings
+  - Extract the queue name (first parameter), library, and operation type
+- **Message queue operations** -- RPG programs interact with message queues via:
+  - `CALL 'QMHSNDM'` -- send message to a message queue (API)
+  - `CALL 'QMHRCVPM'` -- receive program message (API)
+  - `CALL 'QMHSNDPM'` -- send program message (API)
+  - Message queue operations via QCMDEXC: `'SNDMSG'` / `'SNDBRKMSG'` / `'RCVMSG'` command strings
+  - Extract the queue name, message ID, and operation type
 - `CALLSUBR SUBR($name)` -- S/36 legacy subroutine patterns
 - **File overrides via QCMDEXC** -- RPG programs sometimes execute CL commands at
   runtime by building a command string and calling QCMDEXC. Detect these patterns:
@@ -300,6 +357,10 @@ For each program in the call tree, read the source file and extract:
   list, they build command strings like `'ADDLIBLE LIB(PRODLIB)'` and execute them via
   QCMDEXC. Search for ADDLIBLE, RMVLIBLE, CHGLIBL, CHGCURLIB in string literals and
   in fields/data structures that are passed to QCMDEXC.
+- **Job description and job attribute operations via QCMDEXC** -- RPG programs may
+  execute SBMJOB, CHGJOB, RTVJOBA, RTVJOBD, or CHGJOBD via QCMDEXC. Search for these
+  command names in string literals and fields passed to QCMDEXC. Extract the JOBD name,
+  library, and any INLLIBL/CURLIB overrides.
 
 ### SQLRPG/SQLRPGLE (additionally):
 - `EXEC SQL` / `/EXEC SQL` -- embedded SQL statements
@@ -309,6 +370,9 @@ For each program in the call tree, read the source file and extract:
 - `SET PATH` / `SET SCHEMA` / `SET CURRENT SCHEMA` -- SQL-based library/schema changes
   (equivalent to CHGLIBL/CHGCURLIB but through the SQL engine)
 - Library list changes via QCMDEXC -- same patterns as RPG/RPGLE above apply here too
+- Data area, data queue, message queue, and job description operations -- same patterns
+  as RPG/RPGLE above apply here too (DTAARA keyword, IN/OUT opcodes, QSNDDTAQ/QRCVDTAQ
+  APIs, SBMJOB/CHGJOB/RTVJOBA via QCMDEXC, etc.)
 
 ### OCL/OCL36:
 - `// LOAD pgmname` -- program load (= CALL)
@@ -424,7 +488,8 @@ IMPORTANT: The report audience is modern solutions architects who may NOT have A
 experience. Every AS400-specific term MUST be followed by a brief plain-language
 explanation in parentheses on first use. Examples:
 - "Service Programs (shared libraries of reusable procedures, similar to .dll/.so)"
-- "Data Areas (system-level global variables stored outside programs)"
+- "Data Areas (named storage objects that hold a single value, accessible by any program -- like global variables or shared config)"
+- "Named Data Area (a user-created data area for a specific purpose, e.g., holding a counter or control flag)"
 - "QTEMP (a per-job temporary library, analogous to temp tables or /tmp files)"
 - "SBMJOB (submits a program for background/batch execution, like a job queue)"
 - "Physical File / PF (a database table)"
@@ -455,6 +520,16 @@ explanation in parentheses on first use. Examples:
 - "RMVLIBLE (removes a library from the job's search path at runtime)"
 - "CHGLIBL (replaces the entire user library list -- resets the search path)"
 - "CHGCURLIB (changes the default library for new object creation)"
+- "Data Queue / DTAQ (an AS400 message-passing object for async communication between programs -- like RabbitMQ or SQS)"
+- "SNDDTAQ/RCVDTAQ (send/receive entries to/from a data queue)"
+- "QSNDDTAQ/QRCVDTAQ (IBM APIs for data queue operations, called from RPG programs)"
+- "Message Queue / MSGQ (an AS400 object for sending notifications and alerts between programs or users)"
+- "IN/OUT (RPG opcodes to read/write data area values -- IN locks and reads, OUT writes and unlocks)"
+- "*GDA / Group Data Area (a data area shared across jobs in the same activation group)"
+- "Job Description / JOBD (an AS400 object that defines the runtime environment for a job -- initial library list, job queue, output queue, logging level. Similar to an environment profile or deployment configuration)"
+- "CHGJOB (changes attributes of the current running job at runtime -- can alter JOBD, library list, priority, etc.)"
+- "RTVJOBA (retrieves attributes of the current job into variables -- used to inspect the runtime environment)"
+- "RTVJOBD (retrieves attributes from a job description object -- used to read INLLIBL, JOBQ, etc. from a JOBD)"
 
 Use this structure:
 
@@ -521,21 +596,39 @@ dynamic-unresolved, via-dispatcher
 
 ---
 
-## 4. Data Areas (Global Variables)
+## 4. Data Areas
 
-{Explain: "Data Areas are system-level global variables stored outside of programs.
-They are used for cross-program configuration and state sharing. The Local Data Area
-(*LDA) is a 1024-byte per-job memory block used for implicit parameter passing
-between programs -- like session-scoped global state."}
+{Explain: "Data Areas are named storage objects on AS400 that hold a single value,
+accessible by any program. They function like system-level global variables or
+shared configuration values. There are three kinds:
+- **Named (user-created) data areas** -- created by applications for specific purposes
+  (e.g., NXTORDNUM to hold the next order number, SYSCTL for system control flags).
+  These persist until explicitly deleted and are the most common type.
+- **Local Data Area (*LDA)** -- a 1024-byte per-job memory block used for implicit
+  parameter passing between programs, like session-scoped global state.
+- **Group Data Area (*GDA)** -- shared across jobs in the same group, like a
+  cross-session variable.
 
-| Data Area | Type (Global/Local) | Programs Referencing | Purpose |
-|-----------|-------------------|---------------------|---------|
+In CLP, data areas are accessed via CHGDTAARA/RTVDTAARA commands. In RPG, they are
+accessed via the DTAARA keyword on D-specs and the IN/OUT opcodes, or via QCMDEXC."}
 
-### 4.1 Local Data Area (*LDA) Position Map
+### 4.1 Named Data Areas
+
+| Data Area | Operation | Programs Referencing | How Accessed (CLP cmd / RPG IN-OUT / QCMDEXC) | Purpose |
+|-----------|-----------|---------------------|-----------------------------------------------|---------|
+
+### 4.2 Local Data Area (*LDA) Position Map
 
 {Explain: "The *LDA is a fixed 1024-byte buffer where different programs read/write
 specific byte positions by convention. There is no formal schema -- the layout is
 maintained by programmer agreement."}
+
+| Position | Length | Value/Field | Set By | Read By |
+|----------|--------|-------------|--------|---------|
+
+### 4.3 Group Data Area (*GDA)
+
+{Include only if *GDA references are found. Otherwise note "No *GDA usage detected."}
 
 | Position | Length | Value/Field | Set By | Read By |
 |----------|--------|-------------|--------|---------|
@@ -553,13 +646,44 @@ are automatically deleted when the job ends."}
 
 ---
 
-## 6. Platform-Specific Constructs
+## 6. Data Queues
+
+{Explain: "Data Queues (DTAQ) are AS400 message-passing objects used for asynchronous
+communication between programs or jobs -- similar to message queues (RabbitMQ, SQS) or
+in-memory channels. One program sends data entries to the queue; another receives them.
+In CLP, they are accessed via SNDDTAQ/RCVDTAQ commands. In RPG, they are accessed by
+calling the QSNDDTAQ/QRCVDTAQ system APIs directly."}
+
+| Data Queue | Library | Operation | Program | How Accessed (CLP cmd / RPG API / QCMDEXC) |
+|------------|---------|-----------|---------|---------------------------------------------|
+
+{If no data queue usage is found, note "No data queue usage detected in the call tree."}
+
+---
+
+## 7. Message Queues
+
+{Explain: "Message Queues (MSGQ) are AS400 objects for sending notifications, alerts,
+and operator messages between programs, users, or system processes -- similar to a
+notification bus or logging sink. Distinct from Message Files (MSGF), which are catalogs
+of predefined message templates. In CLP, they are accessed via SNDMSG/SNDBRKMSG/RCVMSG
+commands. In RPG, they are accessed via the QMHSNDM/QMHSNDPM/QMHRCVPM system APIs or
+via QCMDEXC."}
+
+| Message Queue | Operation | Program | Target User/Queue | How Accessed |
+|---------------|-----------|---------|-------------------|--------------|
+
+{If no message queue usage is found, note "No message queue usage detected in the call tree."}
+
+---
+
+## 8. Platform-Specific Constructs
 
 {Explain: "This section documents patterns that are specific to the AS400 platform and
 will need special attention during modernization. Each subsection explains what the
 construct does and why it exists."}
 
-### 6.1 File Overrides & Dynamic Queries
+### 8.1 File Overrides & Dynamic Queries
 
 {Explain: "File Overrides (OVRDBF) redirect file access at runtime -- like dependency
 injection for database files. Dynamic Queries (OPNQRYF/OPNSQLF) build filtered views
@@ -571,7 +695,7 @@ calls -- trace these cross-program scopes."}
 | Program | Source Type | Command | Description | Override From | Override To | Selection Criteria |
 |---------|-----------|---------|------------|---------------|-------------|-------------------|
 
-### 6.2 Library List Changes
+### 8.2 Library List Changes
 
 {Explain: "The Library List is the AS400 runtime search path -- it determines which
 version of a file, program, or object is found when referenced by unqualified name.
@@ -592,15 +716,34 @@ are in the list. In RPG programs, these commands are executed via QCMDEXC."}
 - Whether the change is restored after processing (RMVLIBLE after ADDLIBLE)
 - For CHGLIBL, the complete library list if available}
 
-### 6.3 Background Job Submissions (SBMJOB)
+### 8.3 Background Job Submissions (SBMJOB)
 
 {Explain: "SBMJOB submits a program for asynchronous/batch execution, similar to
-publishing a message to a job queue or scheduling a background worker."}
+publishing a message to a job queue or scheduling a background worker. The JOBD (Job
+Description) parameter is critical -- it defines the runtime environment for the
+submitted job, including the initial library list, job queue, output queue, and other
+attributes. INLLIBL and CURLIB on SBMJOB can override the JOBD's library list."}
 
-| Program | Submitted Program | Job Queue | Job Description | Parameters |
-|---------|------------------|-----------|-----------------|------------|
+| Program | Submitted Program | Job Queue | Job Description (JOBD) | INLLIBL Override | CURLIB Override | Other Parameters |
+|---------|------------------|-----------|----------------------|-----------------|----------------|-----------------|
 
-### 6.4 Error Handling (MONMSG)
+### 8.3.1 Job Descriptions Referenced
+
+{Explain: "Job Descriptions (JOBD) are AS400 objects that define the runtime environment
+for a job -- including the initial library list, job queue, output queue, message logging
+level, and other attributes. They are similar to environment profiles or deployment
+configurations. A single JOBD can be shared by many jobs, so changing a JOBD affects all
+future jobs that reference it. Programs may also change the current job's attributes at
+runtime via CHGJOB."}
+
+| Job Description | Library | Referenced By | Context (SBMJOB / CHGJOB / RTVJOBA) | INLLIBL (if retrievable) |
+|----------------|---------|---------------|--------------------------------------|--------------------------|
+
+{Document each JOBD reference found in the call tree. If the program retrieves JOBD
+attributes (RTVJOBD), note what attributes are being read and how they influence
+program logic. If the JOBD name is a variable, trace it to its source.}
+
+### 8.4 Error Handling (MONMSG)
 
 {Explain: "MONMSG is the AS400 error trap mechanism, similar to try/catch. It catches
 specific system message IDs and executes recovery actions."}
@@ -608,7 +751,7 @@ specific system message IDs and executes recovery actions."}
 | Program | Error Code(s) | Action Taken |
 |---------|--------------|-------------|
 
-### 6.5 Message Files & User Messages
+### 8.5 Message Files & User Messages
 
 {Explain: "Message Files (MSGF) are catalogs of predefined messages with substitution
 parameters, similar to i18n resource bundles or error code registries. Programs
@@ -617,7 +760,7 @@ reference messages by ID rather than hardcoding text."}
 | Message File | Message ID | Message Text | Severity | Referenced By | Context |
 |-------------|-----------|-------------|----------|--------------|---------|
 
-### 6.6 Dynamic Program Calls & Runtime Command Execution
+### 8.6 Dynamic Program Calls & Runtime Command Execution
 
 {Explain: "Some calls resolve the target program at runtime from a variable rather than
 a hardcoded name. QCMDEXC is an API that executes an arbitrary command string -- like
@@ -626,7 +769,7 @@ eval() or subprocess.exec()."}
 | Source Program | Target | Resolution | Pattern Description |
 |---------------|--------|-----------|---------------------|
 
-### 6.7 S/36 Legacy Patterns
+### 8.7 S/36 Legacy Patterns
 
 {Explain: "System/36 (S/36) was the predecessor to AS400. Some codebases retain S/36
 conventions like $-prefixed subroutine names and OCL (Operation Control Language)
@@ -635,7 +778,7 @@ commands. These represent the oldest code layer."}
 | Program | Pattern | Description |
 |---------|---------|-------------|
 
-### 6.8 Legacy Data Movement (MOVE/MOVEL)
+### 8.8 Legacy Data Movement (MOVE/MOVEL)
 
 {Explain: "MOVE and MOVEL are RPG assignment operations that copy data between fields
 with implicit type conversion. MOVEL is left-justified, MOVE is right-justified.
@@ -646,25 +789,29 @@ These have no direct modern equivalent -- they rely on fixed-position field layo
 
 ---
 
-## 7. Modernization Recommendations
+## 9. Modernization Recommendations
 
 Categorize each platform-specific construct found above:
 
-### 7.1 Replace (direct modern equivalent exists)
+### 9.1 Replace (direct modern equivalent exists)
 {Items that have direct modern counterparts. For each, state the AS400 pattern and
 its modern replacement. Example: "OPNQRYF dynamic queries → parameterized SQL",
-"Data Areas → application configuration service / environment variables",
+"Named Data Areas → application configuration service / environment variables / database config table",
+"Data Queues → message broker (RabbitMQ, SQS, Redis streams)",
+"Message Queues → structured logging, notification service, or event bus",
 "MSGF message files → i18n resource bundles or error code enum"}
 
-### 7.2 Redesign (needs architectural rethink)
+### 9.2 Redesign (needs architectural rethink)
 {Items requiring fundamentally different approaches in modern architecture. Explain
 WHY the AS400 approach won't work and WHAT the modern alternative looks like.
 Example: "*LDA position-based parameter passing → explicit API request/response models",
 "QTEMP workfile staging → CTEs or temp tables in SQL, or in-memory processing",
 "Library list manipulation → explicit database schema/catalog selection, connection
-strings, or tenant-aware data access layers"}
+strings, or tenant-aware data access layers",
+"JOBD-driven runtime configuration → environment variables, deployment profiles,
+container configuration, or application config files"}
 
-### 7.3 Eliminate (AS400-only, no modern equivalent needed)
+### 9.3 Eliminate (AS400-only, no modern equivalent needed)
 {Items that exist only because of AS400 platform constraints and serve no purpose
 in modern architecture. Explain WHY they can be dropped.
 Example: "MONMSG CPF0000 generic trap → modern exception handling is more granular",
@@ -673,7 +820,7 @@ Example: "MONMSG CPF0000 generic trap → modern exception handling is more gran
 
 ---
 
-## 8. Verification
+## 10. Verification
 
 - **Program Coverage**: {X} of {Y} programs in call tree had source files available
 - **Synon/2E Name Mappings**: {list any programs where xref name differed from source member name}
