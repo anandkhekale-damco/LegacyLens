@@ -84,7 +84,7 @@ LegacyLens/
 |       +-- msgf/                   # Message file exports (JSON)
 |       |   +-- HSMSGF_*.json       # Application message catalog
 |       |   +-- ...
-|       +-- metadata/               # Client-specific cross-reference data
+|       +-- metadata/               # Cross-reference data (exported from RapidIT)
 |           +-- xref_export_*.csv   # Program cross-reference (calls, files, data areas)
 |           +-- pflf_export_*.csv   # Physical file to logical file mappings
 |
@@ -123,6 +123,8 @@ LegacyLens/
 ---
 
 ## Metadata Format
+
+Metadata files are exported from the **RapidIT platform**. Navigate to the **Metadata** section of your project in RapidIT and use the export function to download the cross-reference and PF-LF mapping CSVs.
 
 ### Cross-Reference CSV (`as400/{Client}/metadata/xref_export_*.csv`)
 
@@ -169,7 +171,7 @@ Array of message objects:
 
 1. **Create client folder**: `as400/{ClientName}/`
 2. **Source code**: Place under `as400/{ClientName}/{LibraryName}/{SourceType}/`
-3. **Cross-reference**: Export program cross-reference and PF-LF mappings as CSV files into `as400/{ClientName}/metadata/`
+3. **Cross-reference**: Export the program cross-reference (`xref_export_*.csv`) and PF-LF mapping (`pflf_export_*.csv`) from the **RapidIT platform** (Metadata section → Export) and place them in `as400/{ClientName}/metadata/`
 4. **Message files** (optional): Export MSGF contents as JSON into `as400/{ClientName}/msgf/`
 5. **Validate setup**: `/legacylens-check {ClientName}` -- checks all inputs and reports what is missing
 6. **Run analysis**: `/legacylens-analyze <ProgramName>` -- the skills auto-discover the client from the program location
