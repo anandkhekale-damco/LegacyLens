@@ -417,8 +417,8 @@ Consolidated across entire call tree:
 ## Phase 5: Report Generation
 
 Write the report to `output/{ProgramName}_LegacyLens_analysis_{date}-{time}.md`
-where `{date}` is `yyyy-mm-dd` and `{time}` is `hh.mm.ss` (current timestamp at
-report generation time).
+where `{date}` is `yyyy-mm-dd` and `{time}` is `hh.mm.ss`. Use the machine's
+local date and time for the timestamp (run `date` via Bash to get it).
 
 IMPORTANT: The report audience is modern solutions architects who may NOT have AS400
 experience. Every AS400-specific term MUST be followed by a brief plain-language
@@ -461,7 +461,7 @@ Use this structure:
 ```markdown
 # LegacyLens Modernization Analysis: {ProgramName}
 
-**Generated**: {date}
+**Generated**: {yyyy-mm-dd} {hh:mm:ss} (local time)
 **Entry Point**: {ProgramName} ({SourceType with explanation})
 **Source Location**: {path}
 
