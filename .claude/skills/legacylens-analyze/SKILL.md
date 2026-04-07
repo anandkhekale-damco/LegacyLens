@@ -428,18 +428,20 @@ For every program in the call tree, grep the xref CSV for `*FILE` entries:
 grep '^"{PROGRAMNAME}",' as400/{Client}/metadata/xref_export_*.csv | grep '"*FILE"'
 ```
 
-Map File Usage codes to human-readable labels:
-- 1 = INPUT (read-only)
-- 2 = OUTPUT (write/create)
-- 3 = UPDATE (modify existing records)
-- 4 = DELETE (remove records)
-- 5 = Range operation
-- 6 = CHAIN/SEEK (keyed direct access)
-- 7 = OPEN/DECLARE (cursor/file initialization)
-- 8 = Multi-I/O (combined operations)
-- 9 = Control operation
+Map File Usage codes to **generic, platform-neutral** labels. Do NOT use AS400
+opcodes (CHAIN, READ, SETLL, EXFMT, etc.) in usage labels or operation columns.
+The report audience may not know AS400 — use terms any developer would understand:
+- 1 = Read
+- 2 = Write
+- 3 = Update
+- 4 = Delete
+- 5 = Range read
+- 6 = Keyed read
+- 7 = Open
+- 8 = Read/Write (combined)
+- 9 = Control
 - 10 = Shared access
-- 11 = Advanced operation
+- 11 = Advanced
 
 ### 4.2 Resolve Logical Files to Physical Files
 
@@ -470,6 +472,12 @@ program opens -- trace these cross-program override scopes.
 
 ### 4.4 Produce File Tables
 
+**IMPORTANT: All column values must use generic, platform-neutral language.**
+Do NOT use AS400 opcodes or keywords (CHAIN, READ, SETLL, READE, READP, EXFMT,
+WRITE, UPDATE, DELETE, etc.) in the Usage, Access Pattern, or Operations columns.
+Instead use terms any developer would understand: "Read", "Write", "Update",
+"Delete", "Keyed read", "Sequential read", "Range read", "Display I/O", etc.
+
 Per program:
 | File Name | PF/LF | Base Physical File | Usage | Access Pattern |
 
@@ -485,8 +493,20 @@ where `{date}` is `yyyy-mm-dd` and `{time}` is `hh.mm.ss`. Use the machine's
 local date and time for the timestamp (run `date` via Bash to get it).
 
 IMPORTANT: The report audience is modern solutions architects who may NOT have AS400
-experience. Every AS400-specific term MUST be followed by a brief plain-language
-explanation in parentheses on first use. Examples:
+experience. The report MUST use generic, platform-neutral language throughout:
+
+1. **No AS400 opcodes in table data.** Never use AS400 operation codes (CHAIN, READ,
+   READP, READE, READPE, SETLL, SETGT, WRITE, UPDATE, DELETE, EXFMT, EXCPT, etc.)
+   in the Usage, Access Pattern, or Operations columns of any table. Use generic
+   equivalents: "Read", "Keyed read", "Sequential read", "Write", "Update", "Delete",
+   "Display I/O", "Range read", etc.
+2. **No invented abbreviation expansions.** Do NOT invent or guess long-form meanings
+   for file or program name prefixes (BB, AR, BI, GS, IN, SA, etc.). Use names as-is.
+   Only include descriptions explicitly stated in source code headers or comments.
+3. Every AS400-specific term MUST be followed by a brief plain-language explanation
+   in parentheses on first use.
+
+Examples of AS400-specific term explanations:
 - "Service Programs (shared libraries of reusable procedures, similar to .dll/.so)"
 - "Data Areas (named storage objects that hold a single value, accessible by any program -- like global variables or shared config)"
 - "Named Data Area (a user-created data area for a specific purpose, e.g., holding a counter or control flag)"
