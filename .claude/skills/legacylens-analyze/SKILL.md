@@ -220,7 +220,23 @@ When you detect this pattern:
 - `CALLSUBR SUBR($name)` = subroutine call (dollar-sign prefix is S/36 convention)
 - These represent the oldest migration layer. Flag all for modernization attention.
 
-### 2.3 Merge & Classify
+### 2.3 Program Type Classification
+
+After reading each program's source, classify its **program type** based on the files
+declared in F-specs (RPG/RPGLE) or file operations (CLP/CLLE):
+
+| Program Type | Rule |
+|-------------|------|
+| `Interactive` | Program declares a DSPF (display file) in F-specs (`WORKSTN` device) or uses `SNDRCVF` in CLP |
+| `Report` | Program declares a PRTF (printer file) in F-specs (`PRINTER` device) and has NO display file |
+| `Batch` | Program has neither a display file nor a printer file |
+
+- OCL/OCL36 entry points inherit the type of the main program they call.
+- CLP/CLLE programs: check for `SNDRCVF` (interactive) or `OVRPRTF`/printer file references (report).
+  If neither is found, classify as Batch.
+- If a program has BOTH a DSPF and a PRTF, classify as `Interactive + Report`.
+
+### 2.4 Merge & Classify
 
 Combine the xref-derived tree with source-discovered calls. Classify each call edge:
 
@@ -577,15 +593,25 @@ each other. This section maps the complete call hierarchy starting from the entr
 
 ### 2.1 Call Tree
 
-{Indented tree view showing the full call hierarchy}
+{Indented tree view showing the full call hierarchy.
+Each program line includes the program type tag at the end:
+  ProgramName (description)  [Depth N] — Interactive|Batch|Report
+Example:
+  BB101.RPGLE (main order entry program)                         [Depth 1] — Interactive
+  BB106 (freight charge calculation)                             [Depth 2] — Batch
+  GB730P (general browse/print)                                  [Depth 4] — Report
+}
 
 ### 2.2 Call Details
 
-| # | Program | Source Type | Source Found | Call Type | Depth |
-|---|---------|------------|-------------|-----------|-------|
+| # | Program | Source Type | Source Found | Call Type | Program Type | Depth |
+|---|---------|------------|-------------|-----------|-------------|-------|
 
 Call Type values: xref-confirmed, source-only, xref-only, dynamic-resolved,
 dynamic-unresolved, via-dispatcher
+
+Program Type values: Interactive (has DSPF), Report (has PRTF, no DSPF),
+Interactive + Report (has both DSPF and PRTF), Batch (neither)
 
 ### 2.3 Service Program Bindings (Shared Libraries)
 
